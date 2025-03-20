@@ -17,10 +17,11 @@ services:
   voteapp-postgres:
     image: postgres:15-alpine
     container_name: voteapp-postgres
+    env_file: .env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -29,7 +30,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       retries: 5
 
@@ -40,9 +41,12 @@ services:
     depends_on:
       - voteapp-redis
       - voteapp-postgres
+    env_file: .env
     environment:
-      - REDIS_HOST=voteapp-redis
-      - POSTGRES_HOST=voteapp-postgres
+      - REDIS_HOST=${REDIS_HOST}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - OPTION_A=${OPTION_A}
+      - OPTION_B=${OPTION_B}
     ports:
       - "8080:8080"
     restart: unless-stopped
@@ -56,9 +60,10 @@ services:
     depends_on:
       - voteapp-redis
       - voteapp-postgres
+    env_file: .env
     environment:
-      - REDIS_HOST=voteapp-redis
-      - POSTGRES_HOST=voteapp-postgres
+      - REDIS_HOST=${REDIS_HOST}
+      - POSTGRES_HOST=${POSTGRES_HOST}
     restart: unless-stopped
     networks:
       - backend
@@ -69,8 +74,14 @@ services:
     container_name: voteapp-result
     depends_on:
       - voteapp-postgres
+    env_file: .env
     environment:
-      - POSTGRES_HOST=voteapp-postgres
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - OPTION_A=${OPTION_A}
+      - OPTION_B=${OPTION_B}
     ports:
       - "8081:8080"
     restart: unless-stopped

@@ -16,9 +16,14 @@ namespace Worker
         {
             try
             {
-                var pgsql = OpenDbConnection("Server=voteapp-postgres;Username=postgres;Password=postgres;");
+                var postgresHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
+                var postgresUser = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres";
+                var postgresPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "postgres";
+                var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost";
 
-                var redisConn = OpenRedisConnection("voteapp-redis");
+                var pgsql = OpenDbConnection($"Server={postgresHost};Username={postgresUser};Password={postgresPassword};");
+
+                var redisConn = OpenRedisConnection(redisHost);
                 var redis = redisConn.GetDatabase();
 
                 var keepAliveCommand = pgsql.CreateCommand();
@@ -29,10 +34,9 @@ namespace Worker
                 {
                     Thread.Sleep(100);
 
-                    // Se reconnecter à Redis si la connexion est perdue
                     if (redisConn == null || !redisConn.IsConnected) {
                         Console.WriteLine("Reconnecting Redis");
-                        redisConn = OpenRedisConnection("localhost");
+                        redisConn = OpenRedisConnection(redisHost);
                         redis = redisConn.GetDatabase();
                     }
                     string json = redis.ListLeftPopAsync("votes").Result;
@@ -41,11 +45,10 @@ namespace Worker
                         var vote = JsonConvert.DeserializeAnonymousType(json, definition);
                         Console.WriteLine($"Processing vote for '{vote.vote}' by '{vote.voter_id}'");
 
-                        // Se reconnecter à PostgreSQL si la connexion est perdue
                         if (!pgsql.State.Equals(System.Data.ConnectionState.Open))
                         {
                             Console.WriteLine("Reconnecting DB");
-                            pgsql = OpenDbConnection("Server=localhost;Username=postgres;Password=postgres;");
+                            pgsql = OpenDbConnection($"Server={postgresHost};Username={postgresUser};Password={postgresPassword};");
                         }
                         else
                         {
@@ -103,7 +106,6 @@ namespace Worker
 
         private static ConnectionMultiplexer OpenRedisConnection(string hostname)
         {
-            // Use IP address to workaround https://github.com/StackExchange/StackExchange.Redis/issues/410
             var ipAddress = GetIp(hostname);
             Console.WriteLine($"Found redis at {ipAddress}");
 

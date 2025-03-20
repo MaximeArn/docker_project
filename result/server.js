@@ -13,8 +13,16 @@ io.set("transports", ["polling"]);
 
 const port = 8080;
 
+const POSTGRES_HOST = process.env.POSTGRES_HOST || "localhost";
+const POSTGRES_USER = process.env.POSTGRES_USER || "postgres";
+const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || "postgres";
+const POSTGRES_DB = process.env.POSTGRES_DB || "postgres";
+const OPTION_A = process.env.OPTION_A || "Cats";
+const OPTION_B = process.env.OPTION_B || "Dogs";
+
 io.sockets.on("connection", function (socket) {
   socket.emit("message", { text: "Welcome!" });
+  socket.emit("options", { optionA: OPTION_A, optionB: OPTION_B });
 
   socket.on("subscribe", function (data) {
     socket.join(data.channel);
@@ -22,7 +30,7 @@ io.sockets.on("connection", function (socket) {
 });
 
 const pool = new pg.Pool({
-  connectionString: "postgres://postgres:postgres@voteapp-postgres/postgres",
+  connectionString: `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DB}`,
 });
 
 async.retry(
