@@ -16,8 +16,9 @@ namespace Worker
         {
             try
             {
-                var pgsql = OpenDbConnection("Server=localhost;Username=postgres;Password=postgres;");
-                var redisConn = OpenRedisConnection("localhost");
+                var pgsql = OpenDbConnection("Server=voteapp-postgres;Username=postgres;Password=postgres;");
+
+                var redisConn = OpenRedisConnection("voteapp-redis");
                 var redis = redisConn.GetDatabase();
 
                 var keepAliveCommand = pgsql.CreateCommand();
